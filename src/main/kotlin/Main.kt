@@ -1,19 +1,37 @@
+import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import java.io.File
 
-fun truncate(filePath: String, lineNr: Int) {
-    val ast = StaticJavaParser.parse(File(filePath))
-    val nodes = ast.findAll(Node::class.java, { it.begin.get().line == lineNr && it.end.get().line == lineNr })
-//    nodes.forEach { println(it.javaClass.simpleName); println(it) }
-    val colNrs = nodes.flatMap { listOf(it.range.get().begin.column, it.range.get().end.column) }.distinct()
-//    nodes.forEach { print("$it -> "); print("${it.range.get().begin.column} "); println(it.range.get().end.column) }
-    colNrs.forEach { print("$it ") }
+fun inLine(node: Node, lineNr: Int): Boolean {
+    val beginPos = node.begin.orElse(null) ?: return false
+    val endPos = node.end.orElse(null) ?: return false
+    return beginPos.line == lineNr && endPos.line == lineNr
+}
+
+fun truncate(file: File, lineNr: Int): List<Int> {
+    val ast = try {
+        StaticJavaParser.parse(file)
+    } catch (e: ParseProblemException) {
+        return emptyList()
+    }
+    val nodes = ast.findAll(Node::class.java, { inLine(it, lineNr) })
+    return nodes.flatMap { listOf(it.begin.get().column, it.end.get().column) }.distinct()
 }
 
 fun main(args: Array<String>) {
-    val filePath = args[0]
-    val lineNr = args[1].toInt()
+    if(args[0] == "--bulk") {
+        val dataFile = args[1]
+        val prefix = args[2]
 
-    truncate(filePath, lineNr)
+        File(dataFile).readLines()
+            .map { it.split(" ") }
+            .map { Pair(it[0], truncate(File(prefix, it[0]), it[1].toInt())) }
+            .forEach { println("${it.first} ${it.second.joinToString(" ")}") }
+    } else {
+        val filePath = args[0]
+        val lineNr = args[1].toInt()
+
+        println(truncate(File(filePath), lineNr).joinToString { " " })
+    }
 }
