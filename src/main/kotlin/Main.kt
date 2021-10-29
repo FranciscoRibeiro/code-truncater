@@ -26,12 +26,12 @@ fun main(args: Array<String>) {
 
         File(dataFile).readLines()
             .map { it.split(" ") }
-            .map { Pair(it[0], truncate(File(prefix, it[0]), it[1].toInt())) }
-            .forEach { println("${it.first} ${it.second.joinToString(" ")}") }
+            .map { Triple(it[0], it[1], truncate(File(prefix, it[0]), it[1].toInt())) }
+            .forEach { println("${it.first} ${it.second} ${it.third.joinToString(",")}") }
     } else {
         val filePath = args[0]
         val lineNr = args[1].toInt()
 
-        println(truncate(File(filePath), lineNr).joinToString { " " })
+        println(truncate(File(filePath), lineNr).joinToString { "," })
     }
 }
