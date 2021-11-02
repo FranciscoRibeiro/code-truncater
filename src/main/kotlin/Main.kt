@@ -16,7 +16,7 @@ fun truncate(file: File, lineNr: Int): List<Int> {
         return emptyList()
     }
     val nodes = ast.findAll(Node::class.java, { inLine(it, lineNr) })
-    return nodes.flatMap { listOf(it.begin.get().column, it.end.get().column) }.distinct()
+    return nodes.flatMap { listOf(it.begin.get().column-1, it.end.get().column) }.distinct()
 }
 
 fun main(args: Array<String>) {
