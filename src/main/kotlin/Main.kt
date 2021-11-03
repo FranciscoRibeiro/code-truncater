@@ -1,7 +1,24 @@
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.expr.StringLiteralExpr
 import java.io.File
+
+fun idxsOfCamelCaseStr(str: String): List<Int> {
+    return str.mapIndexedNotNull { i,c -> if(c.isUpperCase()) i else null }
+}
+
+fun idxsOfCamelCaseNode(node: Node): List<Int> {
+    return when(node) {
+        is SimpleName, is StringLiteralExpr -> idxsOfCamelCaseStr(node.toString())
+        else -> emptyList()
+    }.map { it + node.begin.get().column-1 }
+}
+
+fun columns(node: Node): List<Int> {
+    return idxsOfCamelCaseNode(node) + listOf(node.begin.get().column-1, node.end.get().column)
+}
 
 fun inLine(node: Node, lineNr: Int): Boolean {
     val beginPos = node.begin.orElse(null) ?: return false
@@ -16,7 +33,7 @@ fun truncate(file: File, lineNr: Int): List<Int> {
         return emptyList()
     }
     val nodes = ast.findAll(Node::class.java, { inLine(it, lineNr) })
-    return nodes.flatMap { listOf(it.begin.get().column-1, it.end.get().column) }.distinct()
+    return nodes.flatMap { columns(it) }.distinct()
 }
 
 fun main(args: Array<String>) {
@@ -32,6 +49,6 @@ fun main(args: Array<String>) {
         val filePath = args[0]
         val lineNr = args[1].toInt()
 
-        println(truncate(File(filePath), lineNr).joinToString { "," })
+        println(truncate(File(filePath), lineNr).joinToString(","))
     }
 }
