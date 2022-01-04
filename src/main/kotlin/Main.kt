@@ -7,14 +7,24 @@ import com.github.javaparser.ast.expr.StringLiteralExpr
 import java.io.File
 
 fun idxsOfCamelCaseStr(str: String): List<Int> {
-    return str.mapIndexedNotNull { i,c -> if(c.isUpperCase()) i else null }
+    val res = mutableListOf<Int>()
+    for(i in 1 until str.length){
+        if(str[i-1].isLowerCase() && str[i].isUpperCase()){
+            res.add(i)
+        }
+    }
+    return res
 }
 
 fun idxsOfCamelCaseNode(node: Node): List<Int> {
     return when(node) {
-        is SimpleName, is StringLiteralExpr -> idxsOfCamelCaseStr(node.toString())
+        is SimpleName, is StringLiteralExpr -> idxsOfCamelCaseStr(node.toString()) + idxsUnderscore(node.toString())
         else -> emptyList()
     }.map { it + node.begin.get().column-1 }
+}
+
+fun idxsUnderscore(str: String): List<Int> {
+    return str.mapIndexedNotNull { i,c -> if(c == '_') listOf(i,i+1) else null }.flatten()
 }
 
 fun columns(node: Node): List<Int> {
