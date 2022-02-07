@@ -63,6 +63,19 @@ fun bugInStr(file: File, lineNr: Int, colNr: Int): Boolean {
     return strings.isNotEmpty()
 }
 
+fun distanceToLimits(node: Node, colNr: Int): Int {
+    val range = node.range.orElse(null) ?: return Int.MAX_VALUE
+    return colNr - range.begin.column + range.end.column - colNr
+}
+
+fun nodeType(file: File, lineNr: Int, colNr: Int): Node? {
+    val ast = parse(file) ?: return null
+    val nodes = ast.findAll(Node::class.java, { inLine(it, lineNr) && hasColNr(it, colNr) })
+        .sortedBy { distanceToLimits(it, colNr) }
+    return if(nodes.isEmpty()) null
+           else nodes[0]
+}
+
 fun main(args: Array<String>) {
     if(args[0] == "--bulk") {
         val dataFile = args[1]
@@ -79,6 +92,13 @@ fun main(args: Array<String>) {
         File(dataFile).readLines()
             .map { it.split(" ") }
             .forEach { if(bugInStr(File(prefix, it[0]), it[1].toInt(), it[2].toInt())) println(it[0]) }
+    } else if(args[0] == "--node-type") {
+        val dataFile = args[1]
+        val prefix = args[2]
+
+        File(dataFile).readLines()
+            .map { it.split(" ") }
+            .forEach { println("${it[0]} ${it[1]} ${it[2]} ${nodeType(File(prefix, it[0]), it[1].toInt(), it[2].toInt())?.javaClass?.simpleName}")}
     } else {
         val filePath = args[0]
         val lineNr = args[1].toInt()
