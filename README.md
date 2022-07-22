@@ -10,3 +10,11 @@ The main purpose of this tool is to analyze a line of *Java* source code and com
 AST nodes;
 - Camel-case and underscore separation of words according
 to *Java* naming conventions.
+
+## Build
+To build the `jar` file, run:
+```
+mvn package
+```
+
+which will create an executable package called `code-truncater.jar` with all dependencies and place it in the `target/` directory.
